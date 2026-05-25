@@ -1,0 +1,17 @@
+[
+  {
+    "source": "Initial resources\\Example TDMS files\\Example 1 - Flexlab\\rawWaveformData_20250416_055339_userDefinedLabel_22438.tdms",
+    "ref": "rawWaveformData_20250416_055339_userDefinedLabel_22438.ref.json",
+    "size_mb": 13.956865
+  },
+  {
+    "source": "Initial resources\\Example TDMS files\\Example 3 - cDAQ files\\LogFile_2025-03-28-12-37-27.tdms",
+    "ref": "LogFile_2025-03-28-12-37-27.ref.json",
+    "size_mb": 9.838031
+  },
+  {
+    "source": "Initial resources\\Example TDMS files\\Example 4 - dataflex\\20260304_061000_DF-030_198.tdms",
+    "ref": "20260304_061000_DF-030_198.ref.json",
+    "size_mb": 39.333514
+  }
+]

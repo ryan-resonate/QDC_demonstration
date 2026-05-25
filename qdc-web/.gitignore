@@ -1,0 +1,19 @@
+target/
+**/*.rs.bk
+Cargo.lock.bk
+
+# wasm-pack drops a .gitignore inside pkg/ that excludes everything in pkg/.
+# We override that here: pkg/ must be committed because GitHub Pages serves
+# the built .wasm + .js artifacts directly to end-users (no build step on
+# their side).
+!pkg/
+!pkg/*
+
+node_modules/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

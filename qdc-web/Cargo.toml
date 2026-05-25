@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["crates/qdc-core"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"

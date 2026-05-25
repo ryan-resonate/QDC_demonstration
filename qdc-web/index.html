@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QDC Field Log Analyser</title>
+<link rel="stylesheet" href="styles.css" />
+<!-- Plotly via CDN. Vendored copy could be added if offline use mattered. -->
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <h1>Quasi-DC Field Log Analyser</h1>
+    <div class="status">
+        <span id="wasm-status" class="badge">WASM: booting…</span>
+    </div>
+</header>
+
+<nav class="stages" role="tablist" aria-label="Workflow stages">
+    <button class="stage-tab" data-stage="load" role="tab" aria-selected="true">1. Load</button>
+    <button class="stage-tab" data-stage="process" role="tab" aria-selected="false">2. Process</button>
+    <button class="stage-tab" data-stage="plot" role="tab" aria-selected="false">3. Plot</button>
+</nav>
+
+<main>
+
+<!-- ============ Stage 1: Load ============ -->
+<section class="stage" id="stage-load" data-active="true">
+    <h2>Load data</h2>
+
+    <div class="panel">
+        <div class="row">
+            <label for="input-type">File type</label>
+            <select id="input-type">
+                <option value="tdms" selected>TDMS</option>
+                <option value="csv">CSV</option>
+                <option value="processed_csv">Processed CSV</option>
+                <option value="dat">DAT</option>
+            </select>
+
+            <button id="add-files-btn" type="button">Add files…</button>
+            <input id="file-input" type="file" multiple hidden />
+
+            <button id="clear-files-btn" type="button" class="secondary">Clear</button>
+        </div>
+
+        <div class="filelist-shell">
+            <ol id="filelist" class="filelist"></ol>
+            <p class="muted" id="filelist-empty">No files yet. Drag &amp; drop, or click <em>Add files…</em>.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Processing parameters</h3>
+        <div class="grid">
+            <label>Low-pass cutoff (Hz)
+                <input id="lp-freq" type="number" step="0.001" value="5.0" />
+            </label>
+            <label>Filter type
+                <select id="filter-type">
+                    <option value="butterworth" selected>Butterworth</option>
+                    <option value="rc_cascade">RC Cascade</option>
+                    <option value="bessel">Bessel (not yet ported)</option>
+                    <option value="none">None</option>
+                </select>
+            </label>
+            <label>Pk-pk window (s)
+                <input id="pkpk-time" type="number" step="0.001" value="120.0" />
+            </label>
+            <label>Output sample rate (Hz)
+                <input id="pkpk-fs" type="number" step="0.0001" value="1.0" />
+            </label>
+            <label>CSV time-column index
+                <input id="csv-time-col" type="number" step="1" value="0" />
+            </label>
+        </div>
+    </div>
+
+    <div class="panel" id="channels-panel">
+        <h3>Channels</h3>
+        <p class="muted" id="channels-hint">Add files to scan headers.</p>
+        <table id="channels-table" hidden>
+            <thead>
+                <tr><th>Use</th><th>Index</th><th>Source name</th><th>Plot name</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="row">
+        <button id="run-btn" type="button" class="primary" disabled>Process →</button>
+        <span class="muted" id="run-hint">Add files and select channels first.</span>
+    </div>
+</section>
+
+<!-- ============ Stage 2: Process ============ -->
+<section class="stage" id="stage-process" data-active="false">
+    <h2>Processing</h2>
+    <div class="panel">
+        <div class="progress-row">
+            <progress id="progress" value="0" max="100"></progress>
+            <span id="progress-text" class="muted">0 / 0</span>
+            <button id="stop-btn" type="button" class="danger" disabled>Stop</button>
+        </div>
+        <pre id="status-log" class="log"></pre>
+    </div>
+</section>
+
+<!-- ============ Stage 3: Plot ============ -->
+<section class="stage" id="stage-plot" data-active="false">
+    <h2>Pk-pk results</h2>
+    <div class="panel">
+        <div class="row">
+            <fieldset class="series-toggles">
+                <legend>Series</legend>
+                <label><input type="checkbox" data-series="x_pkpk" checked /> X</label>
+                <label><input type="checkbox" data-series="y_pkpk" checked /> Y</label>
+                <label><input type="checkbox" data-series="z_pkpk" checked /> Z</label>
+                <label><input type="checkbox" data-series="xy_pkpk" /> XY</label>
+                <label><input type="checkbox" data-series="xz_pkpk" /> XZ</label>
+                <label><input type="checkbox" data-series="yz_pkpk" /> ZY</label>
+                <label><input type="checkbox" data-series="xzy_pkpk" /> XZY</label>
+            </fieldset>
+            <label>Limit line
+                <input id="limit-line" type="number" step="0.001" placeholder="(off)" />
+            </label>
+            <span class="spacer"></span>
+            <button id="save-png-btn" type="button" title="Download the current chart as PNG">Save PNG</button>
+            <button id="save-svg-btn" type="button" title="Download the current chart as SVG">Save SVG</button>
+            <button id="save-csv-btn" type="button" title="Download the processed pk-pk data as CSV">Save CSV</button>
+        </div>
+        <div id="pkpk-plot" class="plot"></div>
+        <p class="muted">Tip: switch the Plotly toolbar to box-select (top-right icons), drag across the chart, and the raw underlying samples for that time range appear below.</p>
+    </div>
+    <div class="panel" id="raw-panel" hidden>
+        <h3>Raw samples in selection <span id="raw-status" class="raw-status muted"></span></h3>
+        <p id="raw-disabled-note" class="muted" hidden>Loaded from Processed CSV — raw underlying samples aren't available for drill-down.</p>
+        <div class="row">
+            <label title="Subtract each channel's mean so X/Y/Z share a comparable y-scale">
+                <input id="subtract-mean" type="checkbox" /> Subtract mean
+            </label>
+            <span class="muted" id="mean-summary"></span>
+        </div>
+        <div id="raw-plot" class="plot"></div>
+    </div>
+</section>
+
+</main>
+
+<footer class="footer">
+    <span id="version-line" class="muted">qdc-core: pending</span>
+</footer>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>

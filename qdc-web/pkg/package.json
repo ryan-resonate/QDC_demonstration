@@ -1,0 +1,17 @@
+{
+  "name": "qdc-core",
+  "type": "module",
+  "description": "Quasi-DC field log processing core (WASM build)",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "qdc_core_bg.wasm",
+    "qdc_core.js",
+    "qdc_core.d.ts"
+  ],
+  "main": "qdc_core.js",
+  "types": "qdc_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
