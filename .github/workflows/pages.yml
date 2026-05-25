@@ -1,0 +1,45 @@
+name: Deploy qdc-web to GitHub Pages
+
+# Run on every push to the default branch, and let you trigger manually
+# from the Actions tab without pushing.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub's official Pages deploy action needs these permissions to publish
+# the site and write the deployment status back to the run.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time. Newer pushes cancel an in-flight
+# build rather than queueing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      # The site is fully pre-built and committed into qdc-web/ (the .wasm
+      # blob lives in qdc-web/pkg/). No build step — just upload that folder.
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./qdc-web
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
